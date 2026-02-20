@@ -1,38 +1,67 @@
 import java.util.*;
 import java.sql.*;
-public class ATM_Reader {
+public class ATM_Reader{
 	public static void main(String[] args) throws Exception{
 		Scanner s=new Scanner(System.in);
 		 //DB Connection
 		Class.forName("com.mysql.cj.jdbc.Driver");
-		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","12345678");
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","132614");
 		//User Choice
 		System.out.println("$-------Find the ATM's cash availability status-------$\n");
 		System.out.println("1. Find ATM ID \n2. Enter ATM ID");
+		int userChoice;
 		System.out.print("Enter your choice: ");
-		int userChoice=s.nextInt();
-		s.nextLine();
-		System.out.println();
-		//Find ATM
+		
+		while (true) {
+		    try {
+		        userChoice = s.nextInt();
+		        s.nextLine();
+		        break;
+		    }
+		    catch (InputMismatchException e) {
+		        System.out.print("\nPlease enter a valid choice: ");
+		        s.nextLine();
+		    }
+		}
+		
+		if(userChoice>2) {
+			System.out.println("\nInvalid choice :(");
+			System.out.print("Retry");
+			return;
+		}
+		//Find ATM Locations
 		if(userChoice==1) {
-			System.out.print("Enter you location: ");
+			System.out.print("\nEnter  a location: ");
 			String location=s.nextLine();
 		
 			System.out.println("Available ATMs \n1. IOB - Indian Oversease Bank "
 					+ "\n2. ICIC - Industrial Credit and Investment Corporation of India"+
 					"\n3. cnrb - Canara Bank"+"\n4. SBI - State Bank of India");
+			int choice=0;
 			System.out.print("Enter your choice: ");
-			int choice=s.nextInt();
+			
+			while(true) {
+				try {
+					choice=s.nextInt();
+					s.nextLine();
+					break;
+				}
+				catch (InputMismatchException e) {
+			        System.out.print("\nPlease enter a valid choice: ");
+			        s.nextLine();
+			    }
+			}
 			
 			if(choice<1 || choice>4) {
-				System.out.println("Invalid Choice :(");
+				System.out.println("\nInvalid Choice :(");
+				System.out.print("Retry");
 				return;
 			}
 			atmByLocation(s,con,choice,location);
 		}
 		//Find Avl_balance
 		else if(userChoice==2) {
-			System.out.print("Enter The ATM ID: ");
+			System.out.print("Enter the AMT ID: ");
 			String atmID=s.next().toLowerCase();
 			System.out.println();
 			atmIdValidation(s,con,atmID);
@@ -61,31 +90,44 @@ public class ATM_Reader {
 		ps.setString(2,("%"+location+"%"));
 		ResultSet rs=ps.executeQuery();
 		
-		while(rs.next()) {
-			System.out.print(("\n"+rs.getString("atm_id"))+" | "+rs.getString("branch_name")+" | "
-					+rs.getString("area")+" | "+rs.getString("city")+"\n");
+		if(rs.next()) {
+			while(rs.next()) {
+				System.out.print(("\n"+rs.getString("atm_id"))+" | "+rs.getString("branch_name")+" | "
+						+rs.getString("area")+" | "+rs.getString("city")+"\n");
+			}
+		}
+		else {
+			System.out.println("\nNo ATM Available at that location!");
+			return;
 		}
 		
-		int option;
+		int option=0;
+		System.out.println("\n1. Exit \n2. Enter ATM ID");
+		System.out.print("Enter your choice: ");
+		
 		do{
-			System.out.println();
-			System.out.println("1. Exit 2. Enter ATM ID");
-			System.out.print("Enter your choice: ");
+			try {
 			option=s.nextInt();
-			System.out.println();
+			s.nextLine();
+			}
+			catch (InputMismatchException e) {
+//		        System.out.println("Enter a valid choice: ");
+		        s.nextLine();
+		    }
+		
 			if(option==1) {
-				System.out.print("$----------Session ended successfully----------$");
+				System.out.print("\n\n$----------Session ended successfully----------$");
 				return;
 			}
 			else if(option==2) {
-				System.out.print("\nEnter The ATM ID: ");
+				System.out.print("\nEnter the ATM ID: ");
 				String atmID=s.next().toLowerCase();
 				atmIdValidation(s,con,atmID);
 			}
 			else {
-				System.out.print("Invalid choice :( ");
+				System.out.print("\nEnter a valid choice: ");
 			}
-		}while(option>2);
+		}while(option>2 || option<1);
 		
 	}
 	
@@ -106,7 +148,7 @@ public class ATM_Reader {
 			else if(atmID.contains("sbi"))
 				bank="sbi";
 			else {
-					System.out.println("Invalid ATM ID :( ");
+					System.out.println("\nInvalid ATM ID :( ");
 					valid=false;
 					System.out.print("Enter a valid ATM ID: ");
 					atmID=s.next().toLowerCase();
@@ -124,7 +166,7 @@ public class ATM_Reader {
 					atmStatus(s,con,bank,atmID);
 				}
 				else {
-					System.out.println("Invalid ATM ID :( ");
+					System.out.println("\nInvalid ATM ID :( ");
 					valid=false;
 					System.out.print("Enter a valid ATM ID: ");
 					atmID=s.next().toLowerCase();
@@ -147,11 +189,11 @@ public class ATM_Reader {
 		if(rs.next()) {
 			System.out.print(rs.getString("atm_id")+" | "+rs.getString("branch_name")+" | "
 					+rs.getString("area")+" | "+rs.getString("city")+"\n");
-			if(rs.getDouble("avl_balance")>100000){
-				System.out.println("Available balance: 100000+");			
+			if(rs.getDouble("avl_balance")>100000) {
+				System.out.println("Available balance: 100000+");
 				System.out.print("\n$----------Session ended successfully----------$");
 			}
-			else{
+			else {
 				System.out.println("Available balance: "+rs.getDouble("avl_balance"));
 				System.out.print("\n$----------Session ended successfully----------$");
 			}
