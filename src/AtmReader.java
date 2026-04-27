@@ -1,9 +1,9 @@
 import java.util.*;
 import java.sql.*;
-public class ATM_Reader{
+public class AtmReader{
 	public static void main(String[] args) throws Exception{
 		Scanner s=new Scanner(System.in);
-		 //DB Connection
+		//DB Connection
 		Class.forName("com.mysql.cj.jdbc.Driver");
 		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","132614");
 		//User Choice
@@ -194,10 +194,126 @@ public class ATM_Reader{
 				System.out.print("\n$----------Session ended successfully----------$");
 			}
 			else {
-				System.out.println("Available balance: "+rs.getDouble("avl_balance"));
-				System.out.print("\n$----------Session ended successfully----------$");
+				System.out.printf("\nAvailable balance: "+"%.2f",rs.getDouble("avl_balance"));
+				System.out.print("\n\n$----------Session ended successfully----------$");
 			}
 		}
 	}
+	
+	
+	//Simulating the real world transaction process
+	static public void atmSim(String atmID) throws Exception{
+		Scanner s=new Scanner(System.in);
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","132614");
+		String bank=null;
+		String query=null;
+		boolean valid;
+		
+		do {
+			valid=true;
+			if(atmID.contains("iob")) 
+				bank="iob";
+			else if(atmID.contains("icic"))
+				bank="icic";
+			else if(atmID.contains("cnrb")) 
+				bank="cnrb";
+			else if(atmID.contains("sbi"))
+				bank="sbi";
+			else {
+					System.out.println("\nInvalid ATM ID :( ");
+					valid=false;
+					System.out.print("Enter a valid ATM ID: ");
+					atmID=s.next().toLowerCase();
+					System.out.println();
+			}
+			
+			if(valid) {
+				query=("SELECT atm_id FROM "+bank+" WHERE atm_id=?");
+				PreparedStatement ps=con.prepareStatement(query);
+				ps.setString(1,atmID);
+				
+				ResultSet rs=ps.executeQuery();
+				
+				if(rs.next()) {
+//					atmStatus(s,con,bank,atmID);
+					continue;
+				}
+				else {
+					System.out.println("\nInvalid ATM ID :( ");
+					valid=false;
+					System.out.print("Enter a valid ATM ID: ");
+					atmID=s.next().toLowerCase();
+					System.out.println();
+				}
+			}
+		}while(!valid);
+	}
+	
+	double atmReserve(String atmID) throws Exception{
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","132614");
+		double balance=0;
+		String bank=null;
+		if(atmID.contains("iob")) 
+			bank="iob";
+		else if(atmID.contains("icic"))
+			bank="icic";
+		else if(atmID.contains("cnrb")) 
+			bank="cnrb";
+		else if(atmID.contains("sbi"))
+			bank="sbi";
+		
+		String query="SELECT avl_balance FROM "+ bank +" where atm_id = ?";
+		
+		PreparedStatement ps=con.prepareStatement(query);
+		ps.setString(1,atmID);
+		
+		ResultSet rs=ps.executeQuery();
+		if(rs.next()) {
+			balance=rs.getDouble("avl_balance");
+		}
+		
+		return balance;
+	}
+	
+	void afterWithdraw(String atmID,double withdrawAmount, double oldBalance) throws Exception{
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","132614");
+		double newBalance=oldBalance-withdrawAmount;
+		String bank=null;
+		if(atmID.contains("iob")) 
+			bank="iob";
+		else if(atmID.contains("icic"))
+			bank="icic";
+		else if(atmID.contains("cnrb")) 
+			bank="cnrb";
+		else if(atmID.contains("sbi"))
+			bank="sbi";
+		
+		String query="UPDATE "+bank+" SET avl_balance = ? WHERE atm_id = ?";
 
+		PreparedStatement ps=con.prepareStatement(query);
+		ps.setDouble(1,newBalance);
+		ps.setString(2,atmID);
+		ps.executeUpdate();
+	}
+	
+	void afterDeposit(String atmID,double depositAmount, double oldBalance) throws Exception{
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/atm","root","132614");
+		double newBalance=oldBalance+depositAmount;
+		String bank=null;
+		if(atmID.contains("iob")) 
+			bank="iob";
+		else if(atmID.contains("icic"))
+			bank="icic";
+		else if(atmID.contains("cnrb")) 
+			bank="cnrb";
+		else if(atmID.contains("sbi"))
+			bank="sbi";
+		
+		String query="UPDATE "+bank+" SET avl_balance = ? WHERE atm_id = ?";
+
+		PreparedStatement ps=con.prepareStatement(query);
+		ps.setDouble(1,newBalance);
+		ps.setString(2,atmID);
+		ps.executeUpdate();
+	}
 }
